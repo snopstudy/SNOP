@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WCST / M-WCST — Test Neuropsicológico</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0a0c14;
+  --s1:       #111422;
+  --s2:       #181c2e;
+  --s3:       #1f2438;
+  --border:   #252b42;
+  --border2:  #2e3550;
+  --t1:       #e8ecf8;
+  --t2:       #8891b0;
+  --t3:       #4e567a;
+  --accent:   #4c80ff;
+  --accentd:  #1a3a8a;
+  --green:    #29d472;
+  --greend:   #0b3d22;
+  --red:      #ff4454;
+  --redd:     #3d0b11;
+  --yellow:   #ffcc33;
+  --yellowd:  #3d2e00;
+  --orange:   #ff8c33;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{height:100%;font-size:15px;}
+body{min-height:100%;background:var(--bg);color:var(--t1);font-family:'DM Sans',sans-serif;line-height:1.5;overflow:hidden;height:100vh;}
+
+/* SCREENS */
+.screen{display:none;width:100%;height:100vh;overflow-y:auto;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ─── SETUP ─── */
+#setup{align-items:center;justify-content:center;gap:28px;padding:40px 20px;}
+.logo{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;letter-spacing:-0.03em;text-align:center;background:linear-gradient(135deg,#fff 0%,#6888cc 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo sub{font-size:0.45em;vertical-align:middle;-webkit-text-fill-color:#6888cc;font-weight:600;letter-spacing:0;}
+.logo-sub{color:var(--t3);font-size:0.82rem;text-align:center;letter-spacing:0.04em;font-family:'JetBrains Mono',monospace;text-transform:uppercase;}
+.ver-row{display:flex;gap:14px;}
+.ver-card{cursor:pointer;border:2px solid var(--border);border-radius:14px;padding:22px 24px;width:270px;background:var(--s1);transition:border-color .2s,background .2s;position:relative;}
+.ver-card:hover{border-color:var(--border2);background:var(--s2);}
+.ver-card.sel{border-color:var(--accent);background:#0f1a38;}
+.ver-card h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:8px;}
+.ver-card p{color:var(--t2);font-size:0.82rem;line-height:1.65;}
+.ver-tag{position:absolute;top:10px;right:10px;font-family:'JetBrains Mono',monospace;font-size:0.65rem;padding:3px 8px;border-radius:100px;background:var(--s2);color:var(--t3);}
+.ver-card.sel .ver-tag{background:var(--accent);color:#fff;}
+.cfg-row{display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 20px;width:556px;}
+.cfg-row label{color:var(--t2);font-size:0.88rem;flex:1;}
+.cfg-row input[type=range]{flex:2;accent-color:var(--accent);cursor:pointer;}
+.cfg-val{font-family:'JetBrains Mono',monospace;font-size:0.88rem;color:var(--t1);min-width:36px;text-align:right;}
+.btn-p{background:var(--accent);color:#fff;border:none;padding:13px 36px;border-radius:100px;font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;transition:background .2s,transform .15s;}
+.btn-p:hover{background:#3a6bee;transform:translateY(-1px);}
+.btn-p:active{transform:translateY(0);}
+.btn-s{background:transparent;color:var(--t2);border:1px solid var(--border);padding:10px 22px;border-radius:100px;font-size:0.88rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .2s,color .2s;}
+.btn-s:hover{border-color:var(--border2);color:var(--t1);}
+
+/* ─── INSTRUCTIONS ─── */
+#instructions{align-items:center;justify-content:flex-start;padding:40px 20px;gap:20px;}
+.inst-box{max-width:660px;width:100%;background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:30px 32px;}
+.inst-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.inst-title{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;}
+.inst-badge{font-family:'JetBrains Mono',monospace;font-size:0.7rem;padding:4px 10px;border-radius:100px;background:var(--s2);color:var(--t3);}
+.inst-badge.active{background:var(--accent);color:#fff;}
+.inst-body{color:var(--t2);font-size:0.9rem;line-height:1.8;}
+.inst-body p{margin-bottom:10px;}
+.inst-body strong{color:var(--t1);}
+.inst-body .note{background:var(--s2);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;padding:10px 14px;margin:14px 0;font-size:0.84rem;color:var(--t2);}
+.key-preview{display:flex;gap:10px;justify-content:center;margin:20px 0 4px;}
+.key-label-row{display:flex;gap:10px;justify-content:center;margin-bottom:16px;}
+.key-label{width:88px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--t3);}
+.inst-btns{display:flex;gap:12px;justify-content:flex-end;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);}
+
+/* ─── GAME ─── */
+#game{flex-direction:column;height:100vh;overflow:hidden;}
+.g-header{flex-shrink:0;background:var(--s1);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:18px;height:48px;}
+.g-mode{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap;}
+.g-prog-wrap{flex:1;height:3px;background:var(--s3);border-radius:100px;overflow:hidden;}
+.g-prog-fill{height:100%;background:var(--accent);border-radius:100px;transition:width .4s ease;}
+.g-counter{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--t3);white-space:nowrap;}
+.g-cats-header{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--t2);white-space:nowrap;}
+
+.g-body{flex:1;display:flex;overflow:hidden;min-height:0;}
+.g-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 24px;gap:14px;min-width:0;}
+.g-side{width:195px;flex-shrink:0;background:var(--s1);border-left:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+
+.key-row{display:flex;gap:10px;align-items:flex-end;justify-content:center;}
+.key-wrap{position:relative;cursor:pointer;border-radius:10px;transition:transform .15s,filter .15s;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));}
+.key-wrap:hover{transform:translateY(-5px);filter:drop-shadow(0 6px 16px rgba(76,128,255,.35));}
+.key-wrap.flash-ok svg rect:first-child,.key-wrap.flash-ok svg foreignObject{outline:3px solid var(--green);}
+.key-wrap.flash-err svg rect:first-child{outline:3px solid var(--red);}
+.key-num{text-align:center;margin-top:5px;font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--t3);letter-spacing:0.05em;}
+
+.resp-area{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.resp-lbl{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.1em;}
+.resp-card{filter:drop-shadow(0 4px 20px rgba(0,0,0,.5));animation:cardIn .3s ease;}
+
+.fb-banner{width:420px;max-width:100%;padding:11px 20px;border-radius:100px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.02em;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;min-height:42px;}
+.fb-banner.idle{background:var(--s2);color:var(--t3);border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-weight:400;font-size:0.84rem;}
+.fb-banner.ok{background:var(--greend);color:var(--green);border:1px solid #1a5535;}
+.fb-banner.err{background:var(--redd);color:var(--red);border:1px solid #5a1020;}
+.fb-banner.cat{background:var(--accentd);color:#88aaff;border:1px solid #2a4090;font-size:0.82rem;}
+
+/* side stats */
+.stat-blk{background:var(--s2);border-radius:10px;padding:11px 13px;}
+.stat-lbl{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px;}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;color:var(--t1);}
+.stat-val.g{color:var(--green);}
+.stat-val.r{color:var(--red);}
+.stat-sub{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--t3);margin-top:3px;}
+.dots{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border);}
+.dot.on{background:var(--green);}
+.dot.target{background:var(--s3);border:1px solid var(--border2);}
+
+/* ─── RESULTS ─── */
+#results{align-items:center;justify-content:flex-start;padding:32px 20px 40px;gap:20px;overflow-y:auto;}
+.res-header{text-align:center;}
+.res-title{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;letter-spacing:-0.02em;}
+.res-subtitle{color:var(--t2);font-size:0.88rem;margin-top:4px;font-family:'JetBrains Mono',monospace;}
+.res-grid{display:flex;gap:14px;width:100%;max-width:760px;flex-wrap:wrap;}
+.res-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:18px 20px;flex:1;min-width:160px;}
+.res-card-lbl{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;}
+.res-card-val{font-family:'JetBrains Mono',monospace;font-size:1.9rem;font-weight:700;color:var(--t1);}
+.res-card-val.g{color:var(--green);}
+.res-card-val.r{color:var(--red);}
+.norm-table-wrap{width:100%;max-width:760px;background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.norm-table-title{padding:14px 20px;font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.norm-table-title span{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--t3);font-weight:400;}
+table.ntbl{width:100%;border-collapse:collapse;}
+table.ntbl th{padding:9px 16px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--t3);background:var(--s2);border-bottom:1px solid var(--border);}
+table.ntbl td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:0.9rem;}
+table.ntbl tr:last-child td{border-bottom:none;}
+table.ntbl td:nth-child(2){font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;}
+.pe-chip{display:inline-block;padding:3px 9px;border-radius:100px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;}
+.pe-chip.hi{background:var(--greend);color:var(--green);}
+.pe-chip.lo{background:var(--redd);color:var(--red);}
+.pe-chip.md{background:var(--yellowd);color:var(--yellow);}
+.pe-chip.ok{background:#1a2040;color:#88aaff;}
+.norm-note{max-width:760px;color:var(--t3);font-size:0.76rem;text-align:center;line-height:1.7;}
+.norm-note a{color:var(--t2);text-decoration:underline;}
+.res-btns{display:flex;gap:12px;}
+.no-norm{background:var(--s2);border:1px dashed var(--border);border-radius:12px;padding:16px 24px;color:var(--t3);font-size:0.84rem;text-align:center;width:100%;max-width:760px;}
+
+/* ─── ANIMS ─── */
+@keyframes cardIn{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.fadein{animation:fadeIn .3s ease forwards;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════ SETUP ══════════════════════════════ -->
+<div id="setup" class="screen active">
+  <div class="logo">WCST<sub>/</sub>M-WCST</div>
+  <div class="logo-sub">Test de Clasificación de Tarjetas de Wisconsin</div>
+
+  <div class="ver-row">
+    <div class="ver-card sel" data-mode="wcst" onclick="selectMode('wcst')">
+      <div class="ver-tag" id="tag-wcst">CLÁSICO</div>
+      <h3>WCST Original</h3>
+      <p>128 tarjetas (configurable). Cambio de categoría cada <strong>10 aciertos consecutivos</strong>. Sin aviso al sujeto. Orden fijo: Color → Forma → Número.</p>
+    </div>
+    <div class="ver-card" data-mode="mwcst" onclick="selectMode('mwcst')">
+      <div class="ver-tag" id="tag-mwcst">MODIFICADO</div>
+      <h3>M-WCST (Nelson/Schretlen)</h3>
+      <p>48 tarjetas (sin ambigüedades). Cambio cada <strong>6 aciertos consecutivos</strong>. Se avisa al sujeto. Baremos normativos españoles incluidos.</p>
+    </div>
+  </div>
+
+  <div class="cfg-row" id="wcst-cfg">
+    <label>Número de tarjetas (WCST)</label>
+    <input type="range" id="cards-range" min="24" max="128" step="8" value="128">
+    <div class="cfg-val" id="cards-val">128</div>
+  </div>
+
+  <button class="btn-p" onclick="goInstructions()">Ver instrucciones →</button>
+</div>
+
+<!-- ══════════════════════════════ INSTRUCTIONS ══════════════════════════════ -->
+<div id="instructions" class="screen">
+  <div class="inst-box fadein">
+    <div class="inst-header">
+      <div class="inst-title">Instrucciones de administración</div>
+      <div class="inst-badge active" id="inst-badge-label"></div>
+    </div>
+    <div class="inst-body" id="inst-body"></div>
+    <div class="key-preview" id="inst-key-preview"></div>
+    <div class="key-label-row" id="inst-key-labels"></div>
+    <div class="inst-btns">
+      <button class="btn-s" onclick="showScreen('setup')">← Cambiar versión</button>
+      <button class="btn-p" onclick="startGame()">Iniciar evaluación →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ GAME ══════════════════════════════ -->
+<div id="game" class="screen">
+  <div class="g-header">
+    <span class="g-mode" id="g-mode-lbl"></span>
+    <div class="g-prog-wrap"><div class="g-prog-fill" id="g-prog"></div></div>
+    <span class="g-counter" id="g-counter"></span>
+    <span class="g-cats-header" id="g-cats-hdr"></span>
+  </div>
+  <div class="g-body">
+    <div class="g-main">
+      <div class="key-row" id="key-row"></div>
+      <div class="fb-banner idle" id="fb">Selecciona la tarjeta clave donde colocarías esta tarjeta</div>
+      <div class="resp-area">
+        <div class="resp-lbl">Tarjeta a emparejar</div>
+        <div id="resp-card"></div>
+      </div>
+    </div>
+    <div class="g-side">
+      <div class="stat-blk">
+        <div class="stat-lbl">Categorías</div>
+        <div class="stat-val g" id="s-cats">0</div>
+        <div class="stat-sub" id="s-cats-sub"></div>
+      </div>
+      <div class="stat-blk">
+        <div class="stat-lbl">Racha actual</div>
+        <div class="dots" id="s-dots"></div>
+        <div class="stat-val" id="s-streak">0</div>
+      </div>
+      <div class="stat-blk" id="s-rule-blk" style="display:none">
+        <div class="stat-lbl">Regla activa</div>
+        <div class="stat-val" id="s-rule" style="font-size:0.9rem;color:var(--t2)">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ RESULTS ══════════════════════════════ -->
+<div id="results" class="screen">
+  <div class="res-header fadein">
+    <div class="res-title">Resultados</div>
+    <div class="res-subtitle" id="res-sub"></div>
+  </div>
+  <div class="res-grid fadein" id="res-grid"></div>
+  <div id="norm-section" class="fadein" style="width:100%;max-width:760px;"></div>
+  <p class="norm-note fadein" id="norm-note"></p>
+  <div class="res-btns fadein">
+    <button class="btn-s" onclick="showScreen('setup')">Nueva evaluación</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════════════════════════
+const COLORS_HEX = ['#e03535','#28c468','#e8a520','#2878e8'];
+const COLOR_NAMES = ['Rojo','Verde','Amarillo','Azul'];
+const SHAPE_NAMES = ['Triángulo','Estrella','Cruz','Círculo'];
+const RULE_NAMES  = ['Color','Forma','Número'];
+
+// Key cards: index i = color i, shape i, number i (1,2,3,4 items)
+// K0: 1 red triangle, K1: 2 green stars, K2: 3 yellow crosses, K3: 4 blue circles
+const KEY_CARDS = [0,1,2,3].map(i=>({color:i,shape:i,number:i}));
+
+// ══════════════════════════════════════════════════════════════════
+//  SVG CARD RENDERER
+// ══════════════════════════════════════════════════════════════════
+function cardSVG(card, W, H, borderColor='#d0d4e8') {
+  const {color, shape, number} = card;
+  const fill = COLORS_HEX[color];
+  const n = number + 1; // 1..4
+  const cx = W/2, cy = H/2;
+  const S  = Math.min(W,H) * 0.155;  // shape size
+  const gp = S * 1.55;                // gap between shapes
+
+  let pos;
+  if      (n===1) pos = [[cx, cy]];
+  else if (n===2) pos = [[cx, cy-gp*0.55],[cx, cy+gp*0.55]];
+  else if (n===3) pos = [[cx, cy-gp],[cx, cy],[cx, cy+gp]];
+  else            pos = [[cx-gp*0.62,cy-gp*0.6],[cx+gp*0.62,cy-gp*0.6],
+                          [cx-gp*0.62,cy+gp*0.6],[cx+gp*0.62,cy+gp*0.6]];
+
+  const drawAt = (px, py) => {
+    const f = v => v.toFixed(1);
+    switch(shape) {
+      case 0: { // equilateral triangle, apex up
+        const h2 = S*0.866;
+        return `<polygon points="${f(px)},${f(py-S)} ${f(px+h2)},${f(py+S*0.5)} ${f(px-h2)},${f(py+S*0.5)}" fill="${fill}"/>`;
+      }
+      case 1: { // 6-pointed star (Star of David) — 12 vertices: 6 outer + 6 inner at 30° intervals
+        const pts = [];
+        for(let i=0;i<12;i++){
+          const a=(i*30-90)*Math.PI/180, r=i%2===0?S:S*0.46;
+          pts.push(`${f(px+r*Math.cos(a))},${f(py+r*Math.sin(a))}`);
+        }
+        return `<polygon points="${pts.join(' ')}" fill="${fill}"/>`;
+      }
+      case 2: { // plus / cross — arm=S*0.65 so adjacent crosses have ~0.25·S clear gap (gap = S*1.55 − 2·arm)
+        const arm = S*0.65, cw = S*0.28;
+        return `<rect x="${f(px-cw)}" y="${f(py-arm)}" width="${f(cw*2)}" height="${f(arm*2)}" fill="${fill}"/>`+
+               `<rect x="${f(px-arm)}" y="${f(py-cw)}" width="${f(arm*2)}" height="${f(cw*2)}" fill="${fill}"/>`;
+      }
+      case 3: { // circle
+        return `<circle cx="${f(px)}" cy="${f(py)}" r="${f(S*0.88)}" fill="${fill}"/>`;
+      }
+    }
+  };
+
+  const shapes = pos.map(([px,py])=>drawAt(px,py)).join('');
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`+
+    `<rect width="${W}" height="${H}" rx="10" fill="white" stroke="${borderColor}" stroke-width="1.5"/>`+
+    shapes+`</svg>`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  DECK GENERATION
+// ══════════════════════════════════════════════════════════════════
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=0|Math.random()*(i+1);[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+// M-WCST: 48 cards (24 unique non-ambiguous × 2)
+// Non-ambiguous = c,s,n all distinct (no value shared on 2 dims → no 2 dims match same key card)
+function genMWCSTDeck(){
+  const cards=[];
+  for(let c=0;c<4;c++) for(let s=0;s<4;s++) for(let n=0;n<4;n++){
+    if(c!==s && c!==n && s!==n) cards.push({color:c,shape:s,number:n});
+  }
+  // cards.length === 24
+  return shuffle([...cards,...cards]);
+}
+
+// WCST: all 64 combinations, repeated until maxCards
+function genWCSTDeck(maxCards){
+  const base=[];
+  for(let c=0;c<4;c++) for(let s=0;s<4;s++) for(let n=0;n<4;n++)
+    base.push({color:c,shape:s,number:n});
+  let deck=[];
+  while(deck.length<maxCards) deck=deck.concat(shuffle([...base]));
+  return deck.slice(0,maxCards);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  NORMATIVE LOOKUP  ·  Del Pino et al. (2016), Tabla II
+//  Muestra global española (N=700, 18-90 años), sin ajuste demográfico
+// ══════════════════════════════════════════════════════════════════
+function lookupNorm(variable, raw){
+  if(variable==='C'){ // correct categories (higher = better)
+    if(raw>=8) return{pe:18,pc:'>99',interp:'Muy superior',chip:'hi'};
+    if(raw>=7) return{pe:16,pc:'96-97',interp:'Superior',chip:'hi'};
+    if(raw>=6) return{pe:11,pc:'57-68',interp:'Medio',chip:'ok'};
+    if(raw>=5) return{pe:9, pc:'31-43',interp:'Medio-bajo',chip:'ok'};
+    if(raw>=4) return{pe:7, pc:'13-20',interp:'Bajo-normal',chip:'md'};
+    if(raw>=3) return{pe:6, pc:'7-12', interp:'Bajo',chip:'md'};
+    if(raw>=2) return{pe:5, pc:'4-6',  interp:'Bajo',chip:'lo'};
+    if(raw>=1) return{pe:3, pc:'1',    interp:'Muy bajo',chip:'lo'};
+    return            {pe:2, pc:'<1',  interp:'Muy bajo',chip:'lo'};
+  }
+  if(variable==='EP'){ // perseverative errors (lower = better)
+    if(raw===0)  return{pe:18,pc:'>99', interp:'Muy superior',chip:'hi'};
+    if(raw===1)  return{pe:11,pc:'57-68',interp:'Medio',chip:'ok'};
+    if(raw===2)  return{pe:10,pc:'44-56',interp:'Medio',chip:'ok'};
+    if(raw===3)  return{pe:9, pc:'31-43',interp:'Medio',chip:'ok'};
+    if(raw===4)  return{pe:8, pc:'21-30',interp:'Bajo-normal',chip:'ok'};
+    if(raw===5)  return{pe:7, pc:'13-20',interp:'Bajo-normal',chip:'md'};
+    if(raw<=8)   return{pe:6, pc:'7-12', interp:'Bajo',chip:'md'};
+    if(raw<=11)  return{pe:5, pc:'4-6',  interp:'Bajo',chip:'lo'};
+    if(raw<=13)  return{pe:4, pc:'2-3',  interp:'Muy bajo',chip:'lo'};
+    if(raw<=22)  return{pe:3, pc:'1',    interp:'Muy bajo',chip:'lo'};
+    return             {pe:2, pc:'<1',   interp:'Muy bajo',chip:'lo'};
+  }
+  if(variable==='ET'){ // total errors (lower = better)
+    if(raw===0)  return{pe:18,pc:'>99', interp:'Muy superior',chip:'hi'};
+    if(raw===1)  return{pe:14,pc:'87-92',interp:'Superior',chip:'hi'};
+    if(raw===2)  return{pe:13,pc:'80-86',interp:'Superior',chip:'hi'};
+    if(raw===3)  return{pe:12,pc:'69-79',interp:'Medio-alto',chip:'hi'};
+    if(raw===4)  return{pe:11,pc:'57-68',interp:'Medio',chip:'ok'};
+    if(raw===5)  return{pe:10,pc:'44-56',interp:'Medio',chip:'ok'};
+    if(raw<=7)   return{pe:9, pc:'31-43',interp:'Medio',chip:'ok'};
+    if(raw<=10)  return{pe:8, pc:'21-30',interp:'Bajo-normal',chip:'ok'};
+    if(raw<=13)  return{pe:7, pc:'13-20',interp:'Bajo-normal',chip:'md'};
+    if(raw<=16)  return{pe:6, pc:'7-12', interp:'Bajo',chip:'md'};
+    if(raw<=20)  return{pe:5, pc:'4-6',  interp:'Bajo',chip:'lo'};
+    if(raw<=24)  return{pe:4, pc:'2-3',  interp:'Muy bajo',chip:'lo'};
+    if(raw<=30)  return{pe:3, pc:'1',    interp:'Muy bajo',chip:'lo'};
+    return             {pe:2, pc:'<1',   interp:'Muy bajo',chip:'lo'};
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════════════════════
+let G  = {};
+let selectedMode = 'wcst';
+let configMaxCards = 128;
+let fbTimeout = null;
+
+function getCurrentRule(){
+  // WCST: fixed cycle [0,1,2,0,1,2,...]
+  // M-WCST: shuffled base, same cycle
+  return G.ruleBase[G.catIdx % 3];
+}
+
+function initGame(mode, maxCards){
+  const ruleBase = mode==='wcst' ? [0,1,2] : shuffle([0,1,2]);
+  G = {
+    mode,
+    deck:      mode==='mwcst' ? genMWCSTDeck() : genWCSTDeck(maxCards),
+    cardIdx:   0,
+    ruleBase,
+    catIdx:    0,
+    streak:    0,
+    cats:      0,
+    persev:    0,
+    nonPersev: 0,
+    totalErr:  0,
+    prevRule:  null,
+    maxCards:  mode==='mwcst' ? 48 : maxCards,
+    threshold: mode==='mwcst' ? 6  : 10,
+    maxCats:   mode==='mwcst' ? 8  : 6,
+    done:      false,
+    responding:false,
+    startTime: Date.now(),
+    responses: [],
+  };
+}
+
+function processResponse(keyIdx){
+  if(G.done || G.responding) return null;
+  G.responding = true;
+
+  const card  = G.deck[G.cardIdx];
+  const rule  = getCurrentRule();
+  const correctKey = rule===0 ? card.color : rule===1 ? card.shape : card.number;
+  const isCorrect  = keyIdx === correctKey;
+
+  let isPersev   = false;
+  let catComplete= false;
+
+  if(isCorrect){
+    G.streak++;
+    if(G.streak >= G.threshold){
+      G.cats++;
+      G.prevRule = rule;
+      G.catIdx++;
+      G.streak   = 0;
+      catComplete= true;
+    }
+  } else {
+    G.totalErr++;
+    G.streak = 0;
+    if(G.prevRule !== null){
+      const prevKey = G.prevRule===0 ? card.color : G.prevRule===1 ? card.shape : card.number;
+      if(keyIdx === prevKey){ G.persev++; isPersev=true; }
+      else G.nonPersev++;
+    } else {
+      G.nonPersev++;
+    }
+  }
+
+  G.responses.push({cardIdx:G.cardIdx, card, keyIdx, isCorrect, isPersev, rule, catComplete});
+  G.cardIdx++;
+
+  // End conditions
+  if(G.cardIdx >= G.deck.length || G.cats >= G.maxCats) G.done = true;
+
+  return {isCorrect, isPersev, catComplete};
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function selectMode(mode){
+  selectedMode = mode;
+  document.querySelectorAll('.ver-card').forEach(c=>c.classList.remove('sel'));
+  document.querySelector(`[data-mode=${mode}]`).classList.add('sel');
+  document.getElementById('wcst-cfg').style.display = mode==='wcst' ? 'flex' : 'none';
+}
+
+function goInstructions(){
+  renderInstructions(selectedMode);
+  showScreen('instructions');
+}
+
+function renderInstructions(mode){
+  document.getElementById('inst-badge-label').textContent = mode==='wcst' ? 'WCST Clásico' : 'M-WCST (Schretlen 2010)';
+  const preview = document.getElementById('inst-key-preview');
+  const labels  = document.getElementById('inst-key-labels');
+  preview.innerHTML = KEY_CARDS.map(k=>
+    `<div style="border-radius:8px;overflow:hidden;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5))">${cardSVG(k,88,120)}</div>`
+  ).join('');
+  labels.innerHTML = KEY_CARDS.map((k,i)=>
+    `<div class="key-label">${COLOR_NAMES[k.color]}<br>${SHAPE_NAMES[k.shape]}<br>×${k.number+1}</div>`
+  ).join('');
+
+  const body = document.getElementById('inst-body');
+  if(mode==='wcst'){
+    body.innerHTML = `
+      <p>Se le presentarán las <strong>cuatro tarjetas clave</strong> que puede ver a continuación. A continuación recibirá, una a una, un mazo de tarjetas. Su tarea consiste en <strong>colocar cada tarjeta debajo de una de las cuatro tarjetas clave</strong>.</p>
+      <p>No se le dirá qué criterio de clasificación debe utilizar, pero se le informará de si cada elección es <strong>correcta o incorrecta</strong>. Utilice esa información para averiguar el criterio correcto.</p>
+      <p><strong>Importante:</strong> el criterio puede cambiar a lo largo de la tarea sin que se le avise. Cuando eso ocurra, deberá descubrir el nuevo criterio a partir del feedback.</p>
+      <div class="note">💡 Las tarjetas pueden clasificarse por <strong>color</strong>, por <strong>forma</strong> o por <strong>número</strong> de figuras. Solo uno de estos criterios es el correcto en cada momento.</div>
+      <p>Intente acertar el mayor número de tarjetas posible. Cuando esté listo/a, pulse <em>"Iniciar evaluación"</em>.</p>
+    `;
+  } else {
+    body.innerHTML = `
+      <p>Se le presentarán las <strong>cuatro tarjetas clave</strong> que puede ver a continuación. Recibirá 48 tarjetas, una a una, que deberá colocar debajo de una de ellas.</p>
+      <p>No se le dirá de antemano qué criterio usar; debe averiguarlo a través del feedback de <strong>correcto / incorrecto</strong>. Utilice un criterio consistente: color, forma o número de figuras.</p>
+      <p><strong>Importante:</strong> cuando haya acertado <strong>6 veces consecutivas</strong> con un mismo criterio, se le avisará de que debe <em>cambiar a un criterio diferente</em>. Siga el mismo procedimiento para encontrar el nuevo criterio.</p>
+      <div class="note">🔬 <strong>Versión normalizada para población española</strong> (Del Pino et al., 2016; <em>Rev Neurol</em>). Se mostrarán puntuaciones escalares y percentiles al finalizar, tomados de la Tabla II (muestra global, N=700, 18-90 años). Para interpretación clínica completa, consulte los baremos ajustados por edad y educación (Tablas III-VII del artículo original).</div>
+      <p>Cuando esté listo/a, pulse <em>"Iniciar evaluación"</em>.</p>
+    `;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  GAME RENDERING
+// ══════════════════════════════════════════════════════════════════
+function startGame(){
+  initGame(selectedMode, configMaxCards);
+  renderGameShell();
+  showScreen('game');
+  renderGameState();
+}
+
+function renderGameShell(){
+  const mode = G.mode;
+  document.getElementById('g-mode-lbl').textContent = mode==='wcst' ? 'WCST CLÁSICO' : 'M-WCST · NELSON / SCHRETLEN';
+
+  // Render key cards (static)
+  const keyRow = document.getElementById('key-row');
+  keyRow.innerHTML = KEY_CARDS.map((k,i)=>`
+    <div class="key-wrap" id="kw-${i}" onclick="handleKeyClick(${i})">
+      ${cardSVG(k,88,120)}
+      <div class="key-num">${COLOR_NAMES[k.color][0]}${SHAPE_NAMES[k.shape][0]}${k.number+1}</div>
+    </div>
+  `).join('');
+
+  // Hide rule display for WCST (per standard protocol, don't reveal current rule)
+  // For M-WCST we CAN show it (subject is told), but to maintain clinical validity, we hide it
+  document.getElementById('s-rule-blk').style.display = 'none';
+}
+
+function renderGameState(){
+  if(!G.deck[G.cardIdx]) return;
+  const card = G.deck[G.cardIdx];
+
+  // Response card
+  document.getElementById('resp-card').innerHTML =
+    `<div class="resp-card">${cardSVG(card,132,182,'#b8bcd4')}</div>`;
+
+  // Progress
+  const pct = (G.cardIdx / G.maxCards * 100).toFixed(0);
+  document.getElementById('g-prog').style.width = pct+'%';
+  document.getElementById('g-counter').textContent = `${G.cardIdx+1} / ${G.maxCards}`;
+  document.getElementById('g-cats-hdr').textContent = `Categorías: ${G.cats}/${G.maxCats}`;
+
+  // Stats
+  updateStats();
+
+  // Feedback reset
+  setFeedback('idle','Selecciona la tarjeta clave donde colocarías esta tarjeta');
+}
+
+function updateStats(){
+  document.getElementById('s-cats').textContent     = G.cats;
+  document.getElementById('s-cats-sub').textContent = `/ ${G.maxCats}`;
+  document.getElementById('s-streak').textContent   = G.streak;
+
+  // Streak dots
+  const thr = G.threshold;
+  let dots='';
+  for(let i=0;i<thr;i++){
+    dots+=`<div class="dot ${i<G.streak?'on':'target'}"></div>`;
+  }
+  document.getElementById('s-dots').innerHTML = dots;
+  document.getElementById('s-streak').className = 'stat-val'+(G.streak>0?' g':'');
+}
+
+function setFeedback(type, text){
+  const el = document.getElementById('fb');
+  el.className = 'fb-banner '+type;
+  el.textContent = text;
+}
+
+function handleKeyClick(keyIdx){
+  if(G.done || G.responding) return;
+  clearTimeout(fbTimeout);
+
+  const result = processResponse(keyIdx);
+  if(!result) return;
+
+  updateStats();
+
+  // Flash the clicked key card
+  const kw = document.getElementById(`kw-${keyIdx}`);
+  kw.classList.add(result.isCorrect ? 'flash-ok' : 'flash-err');
+  setTimeout(()=>kw.classList.remove('flash-ok','flash-err'), 600);
+
+  if(result.isCorrect){
+    if(result.catComplete && G.mode==='mwcst'){
+      // M-WCST only: subject IS told when category is complete (Nelson/Schretlen protocol)
+      setFeedback('cat',`✓ CORRECTO — Categoría #${G.cats} completada · Ahora use una regla diferente`);
+      fbTimeout = setTimeout(()=>afterFeedback(), 2600);
+    } else {
+      // WCST: never announce category completion — subject must not know rule has changed
+      setFeedback('ok','✓ CORRECTO');
+      fbTimeout = setTimeout(()=>afterFeedback(), 1100);
+    }
+  } else {
+    // Never show perseverative label to subject — that's examiner-side scoring only
+    setFeedback('err','✗ INCORRECTO');
+    fbTimeout = setTimeout(()=>afterFeedback(), 1200);
+  }
+}
+
+function afterFeedback(){
+  if(G.done){
+    showResults();
+  } else {
+    G.responding = false;
+    renderGameState();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RESULTS
+// ══════════════════════════════════════════════════════════════════
+function showResults(){
+  const mode      = G.mode;
+  const duration  = ((Date.now()-G.startTime)/1000).toFixed(0);
+  const totalResp = G.cardIdx;
+  const pctPersev = totalResp>0 ? ((G.persev/totalResp)*100).toFixed(1) : '0.0';
+  const pctNonPersev = totalResp>0 ? ((G.nonPersev/totalResp)*100).toFixed(1) : '0.0';
+
+  document.getElementById('res-sub').textContent =
+    `${mode==='wcst'?'WCST Clásico':'M-WCST (Schretlen 2010)'} · ${totalResp} tarjetas · ${Math.floor(duration/60)}m ${duration%60}s`;
+
+  // Summary cards
+  const grid = document.getElementById('res-grid');
+  grid.innerHTML = [
+    {lbl:'Categorías correctas', val:G.cats, cls: G.cats>=5?'g':G.cats>=3?'':'r'},
+    {lbl:'Errores totales',       val:G.totalErr, cls: G.totalErr<=5?'g':G.totalErr>=20?'r':''},
+    {lbl:'Errores perseverativos',val:G.persev, cls: G.persev<=2?'g':G.persev>=8?'r':''},
+    {lbl:'% Errores persev.',     val:pctPersev+'%', cls:''},
+    {lbl:'Errores no persev.',    val:G.nonPersev, cls:''},
+    {lbl:'Tarjetas jugadas',      val:totalResp, cls:''},
+  ].map(r=>`
+    <div class="res-card">
+      <div class="res-card-lbl">${r.lbl}</div>
+      <div class="res-card-val ${r.cls}">${r.val}</div>
+    </div>
+  `).join('');
+
+  // Normative section (M-WCST only)
+  const normSec  = document.getElementById('norm-section');
+  const normNote = document.getElementById('norm-note');
+
+  if(mode==='mwcst'){
+    const nC  = lookupNorm('C',  G.cats);
+    const nEP = lookupNorm('EP', G.persev);
+    const nET = lookupNorm('ET', G.totalErr);
+
+    normSec.innerHTML = `
+      <div class="norm-table-wrap">
+        <div class="norm-table-title">Baremos normativos <span>Del Pino et al. (2016) · Tabla II · Muestra española N=700</span></div>
+        <table class="ntbl">
+          <thead>
+            <tr>
+              <th>Variable</th><th>PD</th><th>PE</th><th>Percentil</th><th>Interpretación</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Categorías correctas (M-WCST_C)</td>
+              <td>${G.cats}</td>
+              <td>${nC.pe}</td>
+              <td>${nC.pc}</td>
+              <td><span class="pe-chip ${nC.chip}">${nC.interp}</span></td>
+            </tr>
+            <tr>
+              <td>Errores perseverativos (M-WCST_EP)</td>
+              <td>${G.persev}</td>
+              <td>${nEP.pe}</td>
+              <td>${nEP.pc}</td>
+              <td><span class="pe-chip ${nEP.chip}">${nEP.interp}</span></td>
+            </tr>
+            <tr>
+              <td>Errores totales (M-WCST_ET)</td>
+              <td>${G.totalErr}</td>
+              <td>${nET.pe}</td>
+              <td>${nET.pc}</td>
+              <td><span class="pe-chip ${nET.chip}">${nET.interp}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+    normNote.innerHTML = `
+      Puntuaciones escalares (PE): media=10, DT=3. Percentiles y PE obtenidos de la <strong>Tabla II</strong> del artículo original 
+      (muestra global, sin ajuste demográfico). Para interpretación clínica completa, aplicar los baremos por rango de edad 
+      y nivel educativo (Tablas III–VII). La normalización computerizada usa orden de reglas aleatorio; 
+      en la versión administrada en papel, el sujeto establece el orden de categorías.
+      <br><em>Fuente: Del Pino R, Peña J, Ibarretxe-Bilbao N, Schretlen DJ, Ojeda N. Rev Neurol 2016;62(5):193-202.</em>
+    `;
+  } else {
+    normSec.innerHTML = `<div class="no-norm">Los baremos normativos incluidos en esta aplicación corresponden a la versión M-WCST (Del Pino et al., 2016). Para el WCST clásico, consultar: Heaton RK et al. <em>WCST Manual</em> (PAR, 1993) y los datos de la muestra española del proyecto NEURONORMA.</div>`;
+    normNote.innerHTML = '';
+  }
+
+  showScreen('results');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════════
+document.getElementById('cards-range').addEventListener('input', e=>{
+  configMaxCards = parseInt(e.target.value);
+  document.getElementById('cards-val').textContent = configMaxCards;
+});
+// Set initial visibility
+document.getElementById('wcst-cfg').style.display = 'flex';
+</script>
+</body>
+</html>
