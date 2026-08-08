@@ -1,9 +1,55 @@
 <!doctype html>
+<!--
+================================================================================
+CORSI BLOCK-TAPPING TASK — touch-screen adaptation
+================================================================================
+
+PURPOSE
+  Digital measure of visuospatial working memory (forward and backward
+  span). Built for the SNOP study as a control / exploratory cognitive
+  variable, not as a stand-alone diagnostic instrument.
+
+AUTHOR
+  Santiago Latorre Martínez — SNOP study, MERITT research group
+  (Parc Sanitari Sant Joan de Déu / CIBERSAM)
+
+ORIGIN OF THE SEQUENCES
+  Standardized sequences from:
+  Kessels RPC, van Zandvoort MJE, Postma A, Kappelle LJ, de Haan EHF (2000).
+  The Corsi Block-Tapping Task: standardization and normative data.
+  Applied Neuropsychology, 7(4), 252-258.
+
+   Psychosis sample: Siddi S, Preti A, Lara E, Brébion G, Vila R, Iglesias M,
+          Cuevas-Esteban J, López-Carrilero R, Butjosa A, Haro JM (2020).
+          Comparison of the touch-screen and traditional versions of the
+          Corsi block-tapping test in patients with psychosis and healthy
+          controls. BMC Psychiatry, 20:329.
+
+TIMING PARAMETERS (selectable at runtime)
+
+  FAST    500 ms flash / 1000 ms IOI  (500 ms blank gap)
+  MEDIUM  750 ms flash / 1000 ms IOI  (250 ms blank gap)
+  SLOW    1000 ms flash / 1250 ms IOI (250 ms blank gap)
+      
+
+OUTPUT VARIABLES (CSV export, one row per trial + one summary row)
+
+  score_total            (Forward: 0-16, Backward: 0-14)
+  time_to_first_tap_ms
+  avg_time_between_taps_ms 
+                        Average time between consecutive taps within the
+                        trial. Reflects the speed of physically carrying
+                        out the response, once it has started.
+  response_duration_ms  Total time from the end of the sequence display
+                        to the participant's last tap.
+            
+================================================================================
+-->
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Corsi táctil — v6</title>
+  <title>Corsi táctil — v7</title>
   <style>
     :root{
       --bg:#0b0b0f;
@@ -22,7 +68,7 @@
       -webkit-user-select:none; user-select:none;
     }
 
-    /* modo inmersivo: durante la tarea solo se ve el tablero */
+    /* immersive mode: only the board is visible during the task */
     body.running header,
     body.running .panel,
     body.running #result { display:none !important; }
@@ -37,7 +83,7 @@
 
     main{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:12px; gap:12px;}
 
-    /* proporción exacta del tablero de Kessels (255 x 205) */
+    /* exact aspect ratio of the Kessels board (255 x 205 mm) */
     #boardWrap{
       width:min(94vw, 620px);
       aspect-ratio: 255 / 205;
@@ -142,9 +188,9 @@
     <label class="field">
       Ritmo
       <select id="selPace">
-        <option value="fast" >Rápido — 500 / 1000</option>
-        <option value="mid" selected>Medio — 750 / 1000</option>
-        <option value="slow">Lento — 1000 / 1500</option>
+        <option value="fast" selected>Rápido — 500 / 1000</option>
+        <option value="mid">Medio — 750 / 1000</option>
+        <option value="slow">Lento — 1000 / 1250</option>
       </select>
     </label>
     <div class="grow"></div>
@@ -165,41 +211,23 @@
 (() => {
   "use strict";
 
-  /* ==========================================================
-     PARÁMETROS DECLARABLES
-
-     Tablero: réplica proporcional del de Kessels et al. (2000).
-       255 x 205 mm; bloques 30 x 30 mm.
-       Coordenadas = esquina inferior-izquierda del bloque,
-       origen en la esquina inferior-izquierda del tablero.
-
-     Secuencias: las publicadas por Kessels et al. (2000).
-       Sets DISTINTOS para directa e inversa (no son formas paralelas).
-       Techo: longitud 9 en directa, longitud 8 en inversa
-       (el set publicado de inversa no incluye longitud 9).
-
-     Ritmo (flash / IOI inicio-a-inicio):
-       fast : 500 / 1000  -> 1 bloque/s, estándar Kessels 2000 / eCorsi 2014
-       mid  : 750 / 1000  -> misma TASA, mayor duración de estímulo
-       slow : 1000 / 1500 -> tasa reducida; DESVIACIÓN del estándar
-
-     Feedback de toque: momentáneo, duración = duración del flash activo.
-     Entre-ensayos: feedback 400 -> blanco 600 -> fijación 1000 -> blanco 150.
-     Práctica: 1 ensayo de longitud 2 + 1 de longitud 3, aleatorios, no puntuados.
-     Progresión: 2 ensayos/longitud; sube si >=1 correcto; termina si 0/2.
-     Puntuación: nº total de secuencias correctamente reproducidas.
-     ========================================================== */
-
+  // Timing presets. See the documentation block at the top of this file
+  // for the rationale behind each value.
+  //   flash : how long a block stays lit, in milliseconds
+  //   ioi   : inter-onset interval — start-of-flash to start-of-next-flash
   const PACE = {
     fast: { flash: 500,  ioi: 1000, label: "rapido_500_1000" },
     mid:  { flash: 750,  ioi: 1000, label: "medio_750_1000"  },
-    slow: { flash: 1000, ioi: 1500, label: "lento_1000_1500" }
+    slow: { flash: 1000, ioi: 1250, label: "lento_1000_1250" }
   };
 
   const POST_RESPONSE_MS = 400, BLANK_MS = 600, FIXATION_MS = 1000, PRE_FLASH_MS = 150;
   const START_LEN = 2, TRIALS_PER_LEN = 2;
   const PRACTICE_LENGTHS = [2, 3];
 
+  // Board: physical layout of Kessels et al. (2000), 255 x 205 mm board,
+  // 30 x 30 mm blocks. Coordinates = bottom-left corner of each block,
+  // origin at the bottom-left corner of the board.
   const BOARD_W = 255, BOARD_H = 205, BLOCK = 30;
   const KESSELS_MM = {
     1:{x:130, y:155}, 2:{x:30,  y:145}, 3:{x:180, y:120},
@@ -207,7 +235,8 @@
     7:{x:15,  y:50 }, 8:{x:75,  y:20 }, 9:{x:135, y:30 }
   };
 
-  /* Secuencias publicadas (números de bloque 1-9) */
+  // Standardized sequences (block numbers 1-9), Kessels et al. (2000).
+  // Forward and backward use different published sets — not parallel forms.
   const SEQS = {
     fw: {
       2:[[8,5],[6,4]],
@@ -216,8 +245,9 @@
       5:[[5,2,1,8,6],[4,2,7,3,1]],
       6:[[3,9,2,4,8,7],[3,7,8,2,9,4]],
       7:[[5,9,1,7,4,2,8],[5,7,9,2,8,4,6]],
-      // NO CORREGIR: la 2ª secuencia de longitud 8 repite el bloque 3
-      // y omite el 8. Está así en la fuente publicada. Se reproduce literal.
+      // DO NOT "FIX": the 2nd trial of length 8 repeats block 3 and
+      // omits blocks 1 and 8. This is exactly as published — reproduced
+      // literally rather than silently corrected.
       8:[[5,8,1,9,2,6,4,7],[5,9,3,6,7,2,4,3]],
       9:[[5,3,8,7,1,2,4,6,9],[4,2,6,8,1,7,9,3,5]]
     },
@@ -229,6 +259,8 @@
       6:[[2,8,3,5,6,4],[5,3,1,2,8,9]],
       7:[[7,3,2,9,1,8,6],[4,3,7,6,2,5,9]],
       8:[[1,9,6,3,5,4,2,8],[2,9,4,6,1,7,3,5]]
+      // No published length-9 sequence for the backward condition —
+      // the test ends at length 8 (see MAX_LEN below).
     }
   };
   const MAX_LEN = { fw: 9, bw: 8 };
@@ -242,11 +274,11 @@
         btnReset=document.getElementById('btnReset'), btnCsv=document.getElementById('btnCsv'),
         btnAbort=document.getElementById('abort');
 
-  // ===== Estado =====
+  // ===== State =====
   let blocks=[], running=false, accepting=false, aborted=false, phase="idle";
   let curLen=START_LEN, trialInLen=0, correctThisLen=0;
-  let currentSeq=[], respSeq=[], tapTimes=[], tRespOpen=0, tFirstTap=0;
-  let totalCorrect=0, bestSpan=0, rows=[], practiceQueue=[];
+  let currentSeq=[], respSeq=[], tapTimestamps=[], tResponseWindowOpen=0, tFirstTap=0;
+  let scoreTotal=0, maxLengthReached=0, rows=[], practiceQueue=[];
 
   const pace = () => PACE[selPace.value];
   const mode = () => selMode.value;
@@ -308,18 +340,18 @@
     }
     if (aborted) return;
     setLamp(true);
-    respSeq = []; tapTimes = []; tFirstTap = 0;
-    tRespOpen = performance.now();
+    respSeq = []; tapTimestamps = []; tFirstTap = 0;
+    tResponseWindowOpen = performance.now();
     accepting = true;
   }
 
   function onBlockTap(e){
     if (!running || !accepting) return;
-    const el = e.currentTarget;          // capturar aquí: dentro del setTimeout ya sería null
+    const el = e.currentTarget;          // capture now: inside setTimeout it would be null
     const now = performance.now();
     const n = Number(el.dataset.num);
     if (!respSeq.length) tFirstTap = now;
-    respSeq.push(n); tapTimes.push(now);
+    respSeq.push(n); tapTimestamps.push(now);
 
     el.classList.add('tapped');
     setTimeout(() => el.classList.remove('tapped'), pace().flash);
@@ -329,11 +361,12 @@
     }
   }
 
-  function meanITI(){
-    if (tapTimes.length < 2) return "";
+  // Average time between consecutive taps within the trial.
+  function avgTimeBetweenTaps(){
+    if (tapTimestamps.length < 2) return "";
     let s = 0;
-    for (let i=1;i<tapTimes.length;i++) s += tapTimes[i]-tapTimes[i-1];
-    return Math.round(s/(tapTimes.length-1));
+    for (let i=1;i<tapTimestamps.length;i++) s += tapTimestamps[i]-tapTimestamps[i-1];
+    return Math.round(s/(tapTimestamps.length-1));
   }
 
   async function scoreTrial(){
@@ -346,14 +379,14 @@
       longitud: currentSeq.length, intento: phase==="test" ? trialInLen+1 : "",
       secuencia: currentSeq.join("-"), esperada: expected.join("-"), respuesta: respSeq.join("-"),
       acierto: ok ? 1 : 0,
-      ftl_ms: tFirstTap ? Math.round(tFirstTap - tRespOpen) : "",
-      rt_total_ms: tapTimes.length ? Math.round(tapTimes[tapTimes.length-1] - tRespOpen) : "",
-      iti_medio_ms: meanITI()
+      time_to_first_tap_ms: tFirstTap ? Math.round(tFirstTap - tResponseWindowOpen) : "",
+      response_duration_ms: tapTimestamps.length ? Math.round(tapTimestamps[tapTimestamps.length-1] - tResponseWindowOpen) : "",
+      avg_time_between_taps_ms: avgTimeBetweenTaps()
     });
 
     if (phase === "test" && ok){
-      totalCorrect += 1; correctThisLen += 1;
-      bestSpan = Math.max(bestSpan, currentSeq.length);
+      scoreTotal += 1; correctThisLen += 1;
+      maxLengthReached = Math.max(maxLengthReached, currentSeq.length);
     }
 
     await sleep(POST_RESPONSE_MS);
@@ -396,7 +429,7 @@
 
     if (showScore){
       resultEl.classList.add('done');
-      resultEl.textContent = `Puntuación total (${modeTxt()}): ${totalCorrect}`;
+      resultEl.textContent = `Puntuación total (${modeTxt()}): ${scoreTotal}`;
       setStatus(`Prueba finalizada · ${modeTxt()} · ${pace().label}`);
     } else {
       resultEl.classList.remove('done');
@@ -409,8 +442,8 @@
   function resetAll(){
     aborted=true; running=false; accepting=false;
     curLen=START_LEN; trialInLen=0; correctThisLen=0;
-    currentSeq=[]; respSeq=[]; tapTimes=[];
-    totalCorrect=0; bestSpan=0; rows=[]; phase="idle";
+    currentSeq=[]; respSeq=[]; tapTimestamps=[];
+    scoreTotal=0; maxLengthReached=0; rows=[]; phase="idle";
     setLamp(false); fixation.classList.remove('show'); clearTapVisuals();
     setImmersive(false); setControlsEnabled(true);
     btnCsv.classList.remove('show');
@@ -429,7 +462,7 @@
   async function startTest(){
     aborted=false; phase="test";
     curLen=START_LEN; trialInLen=0; correctThisLen=0;
-    totalCorrect=0; bestSpan=0;
+    scoreTotal=0; maxLengthReached=0;
     rows = rows.filter(r => r.fase === "practice");
     running=true; setControlsEnabled(false); setImmersive(true);
     resultEl.classList.remove('done'); resultEl.textContent="—";
@@ -440,11 +473,12 @@
   function downloadCsv(){
     if (!rows.length) return;
     const cols = ["fase","modo","ritmo","flash_ms","ioi_ms","longitud","intento",
-                  "secuencia","esperada","respuesta","acierto","ftl_ms","rt_total_ms","iti_medio_ms"];
+                  "secuencia","esperada","respuesta","acierto",
+                  "time_to_first_tap_ms","response_duration_ms","avg_time_between_taps_ms"];
     const esc = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
     const body = rows.map(r => cols.map(c => esc(r[c])).join(",")).join("\n");
     const sum = `\n"RESUMEN","modo=${modeTxt()}","ritmo=${pace().label}",` +
-                `"puntuacion_total=${totalCorrect}","span=${bestSpan}"`;
+                `"score_total=${scoreTotal}","max_length_reached=${maxLengthReached}"`;
     const blob = new Blob([cols.join(",")+"\n"+body+sum], {type:"text/csv;charset=utf-8"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
