@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Corsi táctil — v5</title>
+  <style>
+    :root{
+      --bg:#0b0b0f;
+      --frame:#f0d64a;
+      --flash:#ffe86a;
+      --tap:#fff3a8;
+      --text:#eaeaf2;
+      --muted:#a6a6b3;
+      --blue:#4aa3ff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background:var(--bg); color:var(--text);
+      display:flex; min-height:100vh; flex-direction:column;
+      -webkit-user-select:none; user-select:none;
+    }
+
+    /* --- modo inmersivo: durante la tarea solo se ve el tablero --- */
+    body.running header,
+    body.running .panel,
+    body.running #log { display:none !important; }
+    body.running main { padding:0; justify-content:center; }
+
+    header{
+      padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    }
+    .title{font-size:14px; font-weight:700}
+    .status{font-size:13px; color:var(--muted); line-height:1.35}
+
+    main{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:12px; gap:12px;}
+
+    /* Tablero: proporción exacta del tablero de Kessels (255 x 205) */
+    #boardWrap{
+      width:min(94vw, 620px);
+      aspect-ratio: 255 / 205;
+      position:relative;
+      background:#000;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      overflow:hidden;
+      touch-action: manipulation;
+    }
+    .block{
+      position:absolute;
+      border:3px solid var(--frame);
+      border-radius:8px;
+      background:transparent;
+      z-index:2;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .block.flash{ background:var(--flash); }
+    .block.tapped{ background:var(--tap); }
+
+    /* única luz azul: esquina superior derecha del tablero (eCorsi) */
+    #boardLamp{
+      position:absolute; top:12px; right:12px; z-index:6;
+      width:18px; height:18px; border-radius:50%;
+      background:rgba(74,163,255,.10); border:1px solid rgba(74,163,255,.28);
+      pointer-events:none;
+    }
+    #boardLamp.on{ background:var(--blue); box-shadow:0 0 22px rgba(74,163,255,.8); border-color:rgba(74,163,255,.95); }
+
+    /* salida discreta para el evaluador mientras la interfaz está oculta */
+    #abort{
+      position:absolute; top:8px; left:8px; z-index:7;
+      width:30px; height:30px; border-radius:8px;
+      border:none; background:transparent; color:rgba(255,255,255,.14);
+      font-size:17px; line-height:1; font-weight:400; padding:0;
+      display:none;
+    }
+    body.running #abort{ display:block; }
+
+    #fixation{
+      position:absolute; inset:0; z-index:5; display:none;
+      align-items:center; justify-content:center; pointer-events:none;
+    }
+    #fixation.show{ display:flex; }
+    #fixation svg{ width:46px; height:46px; opacity:.8 }
+
+    .panel{
+      width:min(94vw, 620px);
+      display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;
+    }
+    .panel .grow{flex:1 1 auto}
+    label.field{display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px}
+    select, button{
+      padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06); color:var(--text); font-weight:600; font-size:14px;
+    }
+    button:disabled{opacity:.4}
+    button.primary{ background:rgba(74,163,255,.18); border-color:rgba(74,163,255,.5) }
+    #btnCsv{display:none}
+    #btnCsv.show{display:inline-block}
+
+    .mono{font-variant-numeric: tabular-nums; font-feature-settings:"tnum" 1;}
+    #result{
+      width:min(94vw, 620px);
+      min-height:56px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:15px; color:var(--muted);
+    }
+    #result.done{
+      color:var(--text); font-size:26px; font-weight:700;
+      border:1px solid rgba(74,163,255,.35); border-radius:12px;
+      background:rgba(74,163,255,.08); padding:16px;
+    }
+    #log{
+      width:min(94vw, 620px); font-size:12px; color:var(--muted);
+      white-space:pre-wrap; line-height:1.5;
+      border-top:1px solid rgba(255,255,255,.08); padding-top:10px;
+      -webkit-user-select:text; user-select:text;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="title">Corsi táctil</div>
+    <div class="status mono" id="statusLine">Listo. Empieza por «Práctica».</div>
+  </div>
+</header>
+
+<main>
+  <div id="boardWrap" aria-label="Tablero Corsi">
+    <button id="abort" title="Interrumpir">&#10005;</button>
+    <div id="boardLamp"></div>
+    <div id="fixation">
+      <svg viewBox="0 0 46 46" aria-hidden="true">
+        <line x1="23" y1="9"  x2="23" y2="37" stroke="#8a8a99" stroke-width="3" stroke-linecap="round"/>
+        <line x1="9"  y1="23" x2="37" y2="23" stroke="#8a8a99" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <label class="field">
+      Modo
+      <select id="selMode">
+        <option value="fw" selected>Directa</option>
+        <option value="bw">Inversa</option>
+      </select>
+    </label>
+    <label class="field">
+      Serie
+      <select id="selSet">
+        <option value="A" selected>A</option>
+        <option value="B">B</option>
+      </select>
+    </label>
+    <label class="field">
+      Ritmo
+      <select id="selPace">
+        <option value="fast" selected>Rápido — 500 / 1000</option>
+        <option value="mid">Medio — 750 / 1000</option>
+        <option value="slow">Lento — 1000 / 1500</option>
+      </select>
+    </label>
+    <div class="grow"></div>
+    <button id="btnPractice" class="primary">Práctica</button>
+    <button id="btnStart">Prueba</button>
+    <button id="btnReset">Reset</button>
+  </div>
+
+  <div id="result">—</div>
+
+  <div class="panel">
+    <div class="grow"></div>
+    <button id="btnCsv">Descargar CSV</button>
+  </div>
+
+  <div id="log" class="mono"></div>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ==========================================================
+     PARÁMETROS DECLARABLES
+
+     Tablero: réplica proporcional del tablero de Kessels et al. (2000).
+       Tablero 255 x 205 mm; bloques 30 x 30 mm.
+       Coordenadas = esquina inferior-izquierda de cada bloque,
+       origen en la esquina inferior-izquierda del tablero.
+
+     Ritmo (flash / IOI inicio-a-inicio):
+       fast : 500 / 1000  -> 1 bloque/s, estándar Kessels 2000 / eCorsi 2014
+       mid  : 750 / 1000  -> misma TASA, mayor duración de estímulo
+       slow : 1000 / 1500 -> tasa reducida; DESVIACIÓN del estándar
+
+     Feedback de toque: momentáneo, duración = duración del flash del ritmo activo.
+     Entre-ensayos: feedback 400 -> blanco 600 -> fijación 1000 -> blanco 150.
+     Práctica: 1 ensayo de longitud 2 + 1 de longitud 3, ALEATORIOS y no puntuados
+       (no consume secuencias estandarizadas).
+     Progresión: 2 ensayos/longitud; sube si >=1 correcto; termina si 0/2.
+     Puntuación: número total de secuencias correctamente reproducidas.
+     ========================================================== */
+
+  const PACE = {
+    fast: { flash: 500,  ioi: 1000, label: "rapido_500_1000" },
+    mid:  { flash: 750,  ioi: 1000, label: "medio_750_1000"  },
+    slow: { flash: 1000, ioi: 1500, label: "lento_1000_1500" }
+  };
+
+  const POST_RESPONSE_MS = 400;
+  const BLANK_MS         = 600;
+  const FIXATION_MS      = 1000;
+  const PRE_FLASH_MS     = 150;
+
+  const START_LEN = 2, MAX_LEN = 9, TRIALS_PER_LEN = 2;
+  const PRACTICE_LENGTHS = [2, 3];
+
+  /* --- Layout de Kessels: (x_izq, y_inf) en mm, tablero 255 x 205 --- */
+  const BOARD_W = 255, BOARD_H = 205, BLOCK = 30;
+  const KESSELS_MM = {                 // clave = número de bloque (1-9)
+    1:{x:130, y:155}, 2:{x:30,  y:145}, 3:{x:180, y:120},
+    4:{x:70,  y:110}, 5:{x:140, y:90 }, 6:{x:195, y:60 },
+    7:{x:15,  y:50 }, 8:{x:75,  y:20 }, 9:{x:135, y:30 }
+  };
+
+  /* --- Secuencias estandarizadas (números de bloque 1-9) --- */
+  const SEQS = {
+    A: {
+      2:[[8,5],[6,4]],
+      3:[[4,7,2],[8,1,5]],
+      4:[[3,4,1,7],[6,1,5,8]],
+      5:[[5,2,1,8,6],[4,2,7,3,1]],
+      6:[[3,9,2,4,8,7],[3,7,8,2,9,4]],
+      7:[[5,9,1,7,4,2,8],[5,7,9,2,8,4,6]],
+      // OJO: el 2º ensayo de longitud 8 repite el bloque 3 y omite 1 y 8.
+      // Transcripción sospechosa: VERIFICAR contra Kessels et al. (2000).
+      8:[[5,8,1,9,2,6,4,7],[5,9,3,6,7,2,4,3]],
+      9:[[5,3,8,7,1,2,4,6,9],[4,2,6,8,1,7,9,3,5]]
+    },
+    B: {
+      2:[[4,7],[2,9]],
+      3:[[9,3,4],[6,3,7]],
+      4:[[1,5,2,8],[7,4,3,9]],
+      5:[[3,1,8,6,5],[9,3,1,4,7]],
+      6:[[2,8,3,5,6,4],[5,3,1,2,8,9]],
+      7:[[7,3,2,9,1,8,6],[4,3,7,6,2,5,9]],
+      8:[[1,9,6,3,5,4,2,8],[2,9,4,6,1,7,3,5]]
+      // La serie B no incluye longitud 9 -> fallback automático a serie A.
+    }
+  };
+
+  // Validación de integridad al cargar
+  (function validate(){
+    Object.entries(SEQS).forEach(([set, byLen]) => {
+      Object.entries(byLen).forEach(([len, trials]) => {
+        trials.forEach((s, i) => {
+          const dup = new Set(s).size !== s.length;
+          if (dup || s.length !== Number(len))
+            console.warn(`[Corsi] Serie ${set}, longitud ${len}, ensayo ${i+1}: secuencia inválida ->`, s.join("-"));
+        });
+      });
+    });
+  })();
+
+  // ===== DOM =====
+  const board=document.getElementById('boardWrap'), boardLamp=document.getElementById('boardLamp'),
+        fixation=document.getElementById('fixation'), statusLine=document.getElementById('statusLine'),
+        resultEl=document.getElementById('result'), logEl=document.getElementById('log'),
+        selMode=document.getElementById('selMode'), selSet=document.getElementById('selSet'),
+        selPace=document.getElementById('selPace'), btnPractice=document.getElementById('btnPractice'),
+        btnStart=document.getElementById('btnStart'), btnReset=document.getElementById('btnReset'),
+        btnCsv=document.getElementById('btnCsv'), btnAbort=document.getElementById('abort');
+
+  // ===== Estado =====
+  let blocks=[], running=false, accepting=false, aborted=false, phase="idle";
+  let curLen=START_LEN, trialInLen=0, correctThisLen=0;
+  let currentSeq=[], respSeq=[], tapTimes=[], tRespOpen=0, tFirstTap=0;
+  let totalCorrect=0, bestSpan=0, rows=[], practiceQueue=[], usedFallback=false;
+
+  const pace  = () => PACE[selPace.value];
+  const mode  = () => selMode.value;
+  const setId = () => selSet.value;
+  const modeTxt = () => mode()==="bw" ? "inversa" : "directa";
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  const setLamp = on => boardLamp.classList.toggle('on', !!on);
+  const setStatus = m => { statusLine.textContent = m; };
+  const clearTapVisuals = () => blocks.forEach(b => b.classList.remove('tapped','flash'));
+
+  function setImmersive(on){
+    document.body.classList.toggle('running', !!on);
+  }
+  function setControlsEnabled(on){
+    [btnPractice, btnStart, btnReset, selMode, selSet, selPace].forEach(el => el.disabled = !on);
+  }
+
+  function renderBoard(){
+    blocks = [];
+    for (let n = 1; n <= 9; n++){
+      const c = KESSELS_MM[n];
+      const el = document.createElement('div');
+      el.className = 'block';
+      el.dataset.num = String(n);
+      el.style.left  = (c.x / BOARD_W * 100) + "%";
+      el.style.top   = ((BOARD_H - c.y - BLOCK) / BOARD_H * 100) + "%";
+      el.style.width = (BLOCK / BOARD_W * 100) + "%";
+      el.style.aspectRatio = "1 / 1";
+      el.addEventListener('pointerdown', onBlockTap);
+      board.appendChild(el);
+      blocks[n] = el;                  // indexado 1..9
+    }
+  }
+
+  function getSeq(len, trialIdx){
+    let src = SEQS[setId()];
+    if (!src[len]){ src = SEQS.A; usedFallback = true; }
+    const arr = src[len] && src[len][trialIdx];
+    if (arr) return arr.slice();
+    // último recurso: aleatorio sin repetición
+    usedFallback = true;
+    const pool = [...Array(9).keys()].map(i => i+1), s = [];
+    for (let i=0;i<len;i++) s.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+    return s;
+  }
+  function randomSeq(len){
+    const pool = [...Array(9).keys()].map(i => i+1), s = [];
+    for (let i=0;i<len;i++) s.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+    return s;
+  }
+  const expectedResponse = seq => mode()==="bw" ? seq.slice().reverse() : seq.slice();
+  const arraysEqual = (a,b) => a.length===b.length && a.every((v,i)=>v===b[i]);
+
+  async function interTrialInterval(){
+    clearTapVisuals();
+    setLamp(false);
+    await sleep(BLANK_MS);           if (aborted) return;
+    fixation.classList.add('show');
+    await sleep(FIXATION_MS);
+    fixation.classList.remove('show'); if (aborted) return;
+    await sleep(PRE_FLASH_MS);
+  }
+
+  async function flashSequence(seq){
+    accepting = false; setLamp(false);
+    const p = pace(), gap = Math.max(0, p.ioi - p.flash);
+    setStatus(`Secuencia de ${seq.length}${phase==="test" ? ` · intento ${trialInLen+1}/${TRIALS_PER_LEN}` : ""}`);
+
+    for (let k = 0; k < seq.length; k++){
+      if (aborted) return;
+      const el = blocks[seq[k]];
+      el.classList.add('flash');
+      await sleep(p.flash);
+      el.classList.remove('flash');
+      if (k < seq.length - 1) await sleep(gap);
+    }
+    if (aborted) return;
+
+    setLamp(true);
+    respSeq = []; tapTimes = []; tFirstTap = 0;
+    tRespOpen = performance.now();
+    accepting = true;
+  }
+
+  function onBlockTap(e){
+    if (!running || !accepting) return;
+    const el = e.currentTarget;               // capturar AHORA: dentro del setTimeout
+    const now = performance.now();            // e.currentTarget ya sería null
+    const n = Number(el.dataset.num);
+    if (!respSeq.length) tFirstTap = now;
+    respSeq.push(n); tapTimes.push(now);
+
+    el.classList.add('tapped');
+    setTimeout(() => el.classList.remove('tapped'), pace().flash);
+
+    if (respSeq.length === currentSeq.length){
+      accepting = false; setLamp(false); scoreTrial();
+    }
+  }
+
+  function meanITI(){
+    if (tapTimes.length < 2) return "";
+    let s = 0;
+    for (let i=1;i<tapTimes.length;i++) s += tapTimes[i]-tapTimes[i-1];
+    return Math.round(s/(tapTimes.length-1));
+  }
+
+  async function scoreTrial(){
+    const expected = expectedResponse(currentSeq);
+    const ok = arraysEqual(respSeq, expected);
+
+    rows.push({
+      fase: phase, modo: modeTxt(), serie: setId(), fallback_serie: usedFallback ? 1 : 0,
+      ritmo: pace().label, flash_ms: pace().flash, ioi_ms: pace().ioi,
+      longitud: currentSeq.length, intento: phase==="test" ? trialInLen+1 : "",
+      secuencia: currentSeq.join("-"), esperada: expected.join("-"), respuesta: respSeq.join("-"),
+      acierto: ok ? 1 : 0,
+      ftl_ms: tFirstTap ? Math.round(tFirstTap - tRespOpen) : "",
+      rt_total_ms: tapTimes.length ? Math.round(tapTimes[tapTimes.length-1] - tRespOpen) : "",
+      iti_medio_ms: meanITI()
+    });
+
+    if (phase === "test" && ok){
+      totalCorrect += 1; correctThisLen += 1;
+      bestSpan = Math.max(bestSpan, currentSeq.length);
+    }
+    printLog();
+
+    await sleep(POST_RESPONSE_MS);
+    if (aborted) return;
+
+    if (phase === "practice"){
+      if (practiceQueue.length) await runPracticeTrial();
+      else finish("Práctica terminada.", false);
+      return;
+    }
+
+    trialInLen += 1;
+    if (trialInLen < TRIALS_PER_LEN){ await nextTestTrial(); return; }
+
+    if (correctThisLen >= 1){
+      curLen += 1; trialInLen = 0; correctThisLen = 0;
+      if (curLen > MAX_LEN) finish(null, true);
+      else await nextTestTrial();
+    } else {
+      finish(null, true);
+    }
+  }
+
+  async function nextTestTrial(){
+    await interTrialInterval(); if (aborted) return;
+    currentSeq = getSeq(curLen, trialInLen);
+    await flashSequence(currentSeq);
+  }
+  async function runPracticeTrial(){
+    await interTrialInterval(); if (aborted) return;
+    currentSeq = randomSeq(practiceQueue.shift());
+    await flashSequence(currentSeq);
+  }
+
+  function printLog(){
+    const r = rows[rows.length-1];
+    if (!r) return;
+    logEl.textContent =
+      `[${r.fase}] ${r.modo} · serie ${r.serie} · ${r.ritmo}\n` +
+      `longitud ${r.longitud}${r.intento ? ` · intento ${r.intento}/${TRIALS_PER_LEN}` : ""}\n` +
+      `presentada ${r.secuencia}   esperada ${r.esperada}   respuesta ${r.respuesta}   ${r.acierto ? "ACIERTO":"FALLO"}\n` +
+      `ensayos registrados: ${rows.length}`;
+  }
+
+  function finish(msg, showScore){
+    running=false; accepting=false; aborted=true;
+    setLamp(false); fixation.classList.remove('show'); clearTapVisuals();
+    setImmersive(false); setControlsEnabled(true);
+    btnCsv.classList.toggle('show', rows.length > 0);
+
+    if (showScore){
+      resultEl.classList.add('done');
+      resultEl.textContent = `Puntuación total (${modeTxt()}): ${totalCorrect}`;
+      setStatus(`Prueba finalizada · serie ${setId()} · ${pace().label}`);
+    } else {
+      resultEl.classList.remove('done');
+      resultEl.textContent = "—";
+      setStatus(msg || "Listo.");
+    }
+    setTimeout(() => { aborted = false; }, 60);
+  }
+
+  function resetAll(){
+    aborted = true; running = false; accepting = false;
+    curLen=START_LEN; trialInLen=0; correctThisLen=0;
+    currentSeq=[]; respSeq=[]; tapTimes=[];
+    totalCorrect=0; bestSpan=0; rows=[]; usedFallback=false; phase="idle";
+    setLamp(false); fixation.classList.remove('show'); clearTapVisuals();
+    setImmersive(false); setControlsEnabled(true);
+    btnCsv.classList.remove('show');
+    resultEl.classList.remove('done'); resultEl.textContent = "—";
+    setStatus("Listo. Empieza por «Práctica».");
+    logEl.textContent = "";
+    setTimeout(() => { aborted = false; }, 60);
+  }
+
+  async function startPractice(){
+    aborted=false; phase="practice"; practiceQueue = PRACTICE_LENGTHS.slice();
+    running=true; setControlsEnabled(false); setImmersive(true);
+    resultEl.classList.remove('done'); resultEl.textContent="—";
+    btnCsv.classList.remove('show');
+    await runPracticeTrial();
+  }
+  async function startTest(){
+    aborted=false; phase="test";
+    curLen=START_LEN; trialInLen=0; correctThisLen=0;
+    totalCorrect=0; bestSpan=0; usedFallback=false;
+    rows = rows.filter(r => r.fase === "practice");
+    running=true; setControlsEnabled(false); setImmersive(true);
+    resultEl.classList.remove('done'); resultEl.textContent="—";
+    btnCsv.classList.remove('show');
+    await nextTestTrial();
+  }
+
+  function downloadCsv(){
+    if (!rows.length) return;
+    const cols = ["fase","modo","serie","fallback_serie","ritmo","flash_ms","ioi_ms","longitud",
+                  "intento","secuencia","esperada","respuesta","acierto","ftl_ms","rt_total_ms","iti_medio_ms"];
+    const esc = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
+    const body = rows.map(r => cols.map(c => esc(r[c])).join(",")).join("\n");
+    const sum = `\n"RESUMEN","modo=${modeTxt()}","serie=${setId()}","ritmo=${pace().label}",` +
+                `"puntuacion_total=${totalCorrect}","span=${bestSpan}"`;
+    const blob = new Blob([cols.join(",")+"\n"+body+sum], {type:"text/csv;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `corsi_${modeTxt()}_${setId()}_${pace().label}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,"")}.csv`;
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+
+  renderBoard();
+  btnPractice.addEventListener('click', startPractice);
+  btnStart.addEventListener('click', startTest);
+  btnReset.addEventListener('click', resetAll);
+  btnCsv.addEventListener('click', downloadCsv);
+  btnAbort.addEventListener('click', () => finish("Interrumpido por el evaluador.", false));
+})();
+</script>
+</body>
+</html>
