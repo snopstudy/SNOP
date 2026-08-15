@@ -53,7 +53,7 @@
                                    registra con omission=1 y no entra en la
                                    verosimilitud de los modelos). Tasa esperada
                                    <1% con este límite.
-  · Duración del feedback ....... 1000 ms.
+  · Duración del feedback ....... 750 ms.
   · Posición de los estímulos ... fija (A izquierda, B derecha).
   · Criterio de aprendizaje ..... 8 aciertos en una ventana deslizante de 10
                                    (para el nº de ensayos hasta criterio).
@@ -872,7 +872,7 @@ const TASK_VERSION     = 'PRLT_fixedseq_1.0';
 
 /* TIEMPOS FIJOS (no ajustables: forman parte del diseño preregistrado) */
 const FIX_MIN_MS   = 100, FIX_MAX_MS = 500;  // ITI: cruz de fijación, jitter corto 100-500 ms
-const FEEDBACK_MS  = 1000;                   // duración del feedback
+const FEEDBACK_MS  = 750;                   // duración del feedback
 const DEADLINE_MS  = 4000;                   // tiempo máximo de respuesta; omisión al superarlo
 
 /* ================================================================
