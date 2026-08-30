@@ -387,7 +387,7 @@ input[type=range]::-moz-range-thumb{
       <hr>
       <div class="sec-label">Probabilidad</div>
       <p class="body" style="font-size:13px;color:var(--muted2);margin-top:-4px;">
-        ¿Qué probabilidad (de 0 a 100) hay de que el pescador esté en ese lago?
+        ¿Cuál es la probabilidad de que el pescador estuviese en el <strong id="d-q-lake"></strong>?
       </p>
 
       <div class="slider-section">
@@ -723,6 +723,9 @@ function chooseLake(lk) {
   G.chosen = lk;
   document.getElementById('d-a').classList.toggle('sel', lk==='A');
   document.getElementById('d-b').classList.toggle('sel', lk==='B');
+  const qLake = document.getElementById('d-q-lake');
+  qLake.textContent = `Lago ${lk}`;
+  qLake.style.color = lk === 'A' ? 'var(--lk-c1)' : 'var(--lk-c2)';
   const sec = document.getElementById('d-slide-sec');
   sec.style.display = 'flex';
   setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'nearest'}), 80);
