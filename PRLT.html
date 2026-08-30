@@ -60,7 +60,7 @@
 
   SALIDAS
   · CSV MÍNIMO (15 columnas, esquema congelado) para el análisis en R/Python.
-    Incluye 'exactitud_subj': estimación metacognitiva 0-10 del propio participante
+    Incluye 'exactitud_subj': estimación metacognitiva 0-100 (%) del propio participante
     (constante por sujeto; 'NA' si no llegó a responderla) y 'deteccion_ctrl':
     pregunta de validación sí/no, codificada 1/0 (constante por sujeto; 'NA' si no
     llegó a responderla).
@@ -342,19 +342,19 @@ Source code licensed under the MIT License.
 
     <!-- Resultados (se rellena al finalizar) -->
     <div id="subjective-accuracy">
-      <p id="subjacc-question">Uno de los genios daba premio más veces que el otro, aunque los dos daban resultados engañosos. De cada 10 veces, ¿en cuántas crees que elegiste el genio más favorable?</p>
-      <div class="subjacc-value"><span id="subjacc-display">5</span> <span class="subjacc-of">de 10</span></div>
-      <input type="range" id="subjacc-slider" min="0" max="10" step="1" value="5" list="subjacc-ticks" />
+      <p id="subjacc-question">¿En qué porcentaje de las elecciones crees que has seleccionado la opción más favorable?</p>
+      <div class="subjacc-value"><span id="subjacc-display">50</span> <span class="subjacc-of">%</span></div>
+      <input type="range" id="subjacc-slider" min="0" max="100" step="10" value="50" list="subjacc-ticks" />
       <datalist id="subjacc-ticks">
-        <option value="0"></option><option value="1"></option><option value="2"></option>
-        <option value="3"></option><option value="4"></option><option value="5"></option>
-        <option value="6"></option><option value="7"></option><option value="8"></option>
-        <option value="9"></option><option value="10"></option>
+        <option value="0"></option><option value="10"></option><option value="20"></option>
+        <option value="30"></option><option value="40"></option><option value="50"></option>
+        <option value="60"></option><option value="70"></option><option value="80"></option>
+        <option value="90"></option><option value="100"></option>
       </datalist>
       <div class="subjacc-scale" id="subjacc-scale"></div>
       <div class="subjacc-ends">
-        <span>0 = ninguna acertada</span>
-        <span>10 = todas acertadas</span>
+        <span>0% = ninguna acertada</span>
+        <span>100% = todas acertadas</span>
       </div>
       <button class="btn" id="subjacc-confirm">Confirmar</button>
     </div>
@@ -1299,7 +1299,7 @@ function afterFeedback(){
    ----------------------------------------------------------------
    Se muestra AL TERMINAR la tarea y ANTES de los resultados, para que
    la estimación no esté contaminada por el resultado objetivo.
-   Respuesta 0-10 -> variable 'exactitud_subj' del CSV mínimo.
+   Respuesta 0-100 (porcentaje, pasos de 10) -> variable 'exactitud_subj' del CSV mínimo.
    ================================================================ */
 let exactitudSubj = null;   // null si no se respondió (p. ej. sesión interrumpida)
 
@@ -1312,8 +1312,8 @@ function askSubjectiveAccuracy(){
   const scale   = document.getElementById('subjacc-scale');
   if (!box || !slider){ askControlQuestion(); return; }   // salvaguarda: sigue el flujo sin bloquear
 
-  // Escala con los 10 escalones visibles y el actual resaltado.
-  scale.innerHTML = Array.from({length: 11}, (_, i) => '<span data-v="' + i + '">' + i + '</span>').join('');
+  // Escala con los 11 escalones visibles (0,10,...,100) y el actual resaltado.
+  scale.innerHTML = Array.from({length: 11}, (_, i) => '<span data-v="' + (i*10) + '">' + (i*10) + '</span>').join('');
   const paint = () => {
     const v = slider.value;
     display.textContent = v;
@@ -1625,7 +1625,7 @@ function trialValues(t){
 // ---- CSV MÍNIMO (15 columnas; esquema congelado para R/Python) ----
 function downloadMinimalCsv(pid){
   const cols = ['id_prlt','trial','phase','block','choice','choice01','outcome','outcome01','correct_stim','misleading','rt_ms','is_reversal_trial','omission','exactitud_subj','deteccion_ctrl'];
-  const ex = (exactitudSubj == null ? 'NA' : exactitudSubj);   // constante por sujeto (0-10)
+  const ex = (exactitudSubj == null ? 'NA' : exactitudSubj);   // constante por sujeto (0-100, %)
   const cd = (controlDetect == null ? 'NA' : (controlDetect ? 1 : 0));   // constante por sujeto (0/1)
   let out = cols.map(csvEscape).join(',') + '\n';
   trials.forEach(t => {
