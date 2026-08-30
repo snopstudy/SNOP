@@ -53,14 +53,14 @@
                                    registra con omission=1 y no entra en la
                                    verosimilitud de los modelos). Tasa esperada
                                    <1% con este límite.
-  · Duración del feedback ....... 750 ms.
+  · Duración del feedback ....... 1000 ms.
   · Posición de los estímulos ... fija (A izquierda, B derecha).
   · Criterio de aprendizaje ..... 8 aciertos en una ventana deslizante de 10
                                    (para el nº de ensayos hasta criterio).
 
   SALIDAS
   · CSV MÍNIMO (15 columnas, esquema congelado) para el análisis en R/Python.
-    Incluye 'exactitud_subj': estimación metacognitiva 0-100 (%) del propio participante
+    Incluye 'exactitud_subj': estimación metacognitiva 0-10 del propio participante
     (constante por sujeto; 'NA' si no llegó a responderla) y 'deteccion_ctrl':
     pregunta de validación sí/no, codificada 1/0 (constante por sujeto; 'NA' si no
     llegó a responderla).
@@ -244,7 +244,18 @@ Source code licensed under the MIT License.
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 8px; width: 180px; height: 180px;   /* tamaño fijo */
     }
-    .fb-coin { width: 84px; height: 84px; object-fit: contain; pointer-events: none; }
+    .fb-coin {
+      width: 84px; height: 84px; object-fit: contain; pointer-events: none;
+      animation: coinPop 0.28s ease-out;   /* aparición dinámica de la moneda */
+    }
+    @keyframes coinPop {
+      0%   { transform: scale(0.4); opacity: 0; }
+      60%  { transform: scale(1.08); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .fb-coin { animation: none; }   /* respeta la preferencia de accesibilidad */
+    }
     .fb-text { font-size: 1.4rem; font-weight: 600; }
     .fb-text.pos { color: var(--success); }
     .fb-text.neg { color: var(--error); }
@@ -342,19 +353,19 @@ Source code licensed under the MIT License.
 
     <!-- Resultados (se rellena al finalizar) -->
     <div id="subjective-accuracy">
-      <p id="subjacc-question">¿En qué porcentaje de las elecciones crees que has seleccionado la opción más favorable?</p>
-      <div class="subjacc-value"><span id="subjacc-display">50</span> <span class="subjacc-of">%</span></div>
-      <input type="range" id="subjacc-slider" min="0" max="100" step="10" value="50" list="subjacc-ticks" />
+      <p id="subjacc-question">Uno de los genios daba premio más veces que el otro, aunque los dos daban resultados engañosos. De cada 10 veces, ¿en cuántas crees que elegiste el genio más favorable?</p>
+      <div class="subjacc-value"><span id="subjacc-display">5</span> <span class="subjacc-of">de 10</span></div>
+      <input type="range" id="subjacc-slider" min="0" max="10" step="1" value="5" list="subjacc-ticks" />
       <datalist id="subjacc-ticks">
-        <option value="0"></option><option value="10"></option><option value="20"></option>
-        <option value="30"></option><option value="40"></option><option value="50"></option>
-        <option value="60"></option><option value="70"></option><option value="80"></option>
-        <option value="90"></option><option value="100"></option>
+        <option value="0"></option><option value="1"></option><option value="2"></option>
+        <option value="3"></option><option value="4"></option><option value="5"></option>
+        <option value="6"></option><option value="7"></option><option value="8"></option>
+        <option value="9"></option><option value="10"></option>
       </datalist>
       <div class="subjacc-scale" id="subjacc-scale"></div>
       <div class="subjacc-ends">
-        <span>0% = ninguna acertada</span>
-        <span>100% = todas acertadas</span>
+        <span>0 = ninguna acertada</span>
+        <span>10 = todas acertadas</span>
       </div>
       <button class="btn" id="subjacc-confirm">Confirmar</button>
     </div>
@@ -872,7 +883,7 @@ const TASK_VERSION     = 'PRLT_fixedseq_1.0';
 
 /* TIEMPOS FIJOS (no ajustables: forman parte del diseño preregistrado) */
 const FIX_MIN_MS   = 100, FIX_MAX_MS = 500;  // ITI: cruz de fijación, jitter corto 100-500 ms
-const FEEDBACK_MS  = 750;                   // duración del feedback
+const FEEDBACK_MS  = 1000;                   // duración del feedback
 const DEADLINE_MS  = 4000;                   // tiempo máximo de respuesta; omisión al superarlo
 
 /* ================================================================
@@ -1299,7 +1310,7 @@ function afterFeedback(){
    ----------------------------------------------------------------
    Se muestra AL TERMINAR la tarea y ANTES de los resultados, para que
    la estimación no esté contaminada por el resultado objetivo.
-   Respuesta 0-100 (porcentaje, pasos de 10) -> variable 'exactitud_subj' del CSV mínimo.
+   Respuesta 0-10 -> variable 'exactitud_subj' del CSV mínimo.
    ================================================================ */
 let exactitudSubj = null;   // null si no se respondió (p. ej. sesión interrumpida)
 
@@ -1312,8 +1323,8 @@ function askSubjectiveAccuracy(){
   const scale   = document.getElementById('subjacc-scale');
   if (!box || !slider){ askControlQuestion(); return; }   // salvaguarda: sigue el flujo sin bloquear
 
-  // Escala con los 11 escalones visibles (0,10,...,100) y el actual resaltado.
-  scale.innerHTML = Array.from({length: 11}, (_, i) => '<span data-v="' + (i*10) + '">' + (i*10) + '</span>').join('');
+  // Escala con los 10 escalones visibles y el actual resaltado.
+  scale.innerHTML = Array.from({length: 11}, (_, i) => '<span data-v="' + i + '">' + i + '</span>').join('');
   const paint = () => {
     const v = slider.value;
     display.textContent = v;
@@ -1579,16 +1590,25 @@ function showResults(){
 }
 
 // Panel de control: tasas de refuerzo realmente entregadas por opción y fase.
+// Se muestran las dos cifras COMPLEMENTARIAS (recompensa % + castigo % = 100%),
+// que es lo que el paciente vio realmente al elegir cada opción, para poder
+// comprobar de un vistazo si la secuencia fija se acerca al 70/30 nominal.
 function buildAuditPanel(m){
   function line(opt, ph){
     const d = m.delivered[opt][ph];
-    const r = d.rate == null ? '\u2014' : (100 * d.rate).toFixed(1) + '%';
+    if (d.rate == null) return '  Opción ' + opt + ' \u2192 sin elecciones en esta fase (n=0)';
+    const rewPct = (100 * d.rate).toFixed(1) + '%';
+    const punPct = (100 * (1 - d.rate)).toFixed(1) + '%';
     const flag = (d.n > 0 && d.n < 10) ? '   [n<10: ruido esperado]' : '';
-    return '  Opci\u00F3n ' + opt + ' \u2192 recompensa ' + d.rew + '/' + d.n + ' (' + r + ')' + flag;
+    return '  Opci\u00F3n ' + opt + ' \u2192 recompensa ' + rewPct + ' / castigo ' + punPct +
+           '  (' + d.rew + '/' + d.n + ' recompensados)' + flag;
   }
-  return '\uD83D\uDD2C CONTROL \u2014 tasas de refuerzo entregadas\n' +
-    'Objetivo 70/30, exacto sobre mazos completos (10 elecciones de la misma opci\u00F3n).\n' +
-    'Con pocas elecciones la tasa observada es ruido de muestreo, no un fallo.\n' +
+  return '\uD83D\uDD2C CONTROL \u2014 tasas de refuerzo REALMENTE vistas por el participante\n' +
+    'Objetivo por opci\u00F3n: 70% recompensa / 30% castigo si es la CORRECTA;\n' +
+    '30% recompensa / 70% castigo si es la INCORRECTA (exacto sobre mazos completos\n' +
+    'de 10 elecciones de la misma opci\u00F3n). Con pocas elecciones la tasa observada\n' +
+    'es ruido de muestreo, no un fallo: para validar la secuencia, compara SOLO\n' +
+    'las filas con n\u226510 frente al objetivo.\n' +
     'Fase aprendizaje:\n' + line('A', 0) + '\n' + line('B', 0) + '\n' +
     'Fase reversi\u00F3n:\n'  + line('A', 1) + '\n' + line('B', 1);
 }
@@ -1625,7 +1645,7 @@ function trialValues(t){
 // ---- CSV MÍNIMO (15 columnas; esquema congelado para R/Python) ----
 function downloadMinimalCsv(pid){
   const cols = ['id_prlt','trial','phase','block','choice','choice01','outcome','outcome01','correct_stim','misleading','rt_ms','is_reversal_trial','omission','exactitud_subj','deteccion_ctrl'];
-  const ex = (exactitudSubj == null ? 'NA' : exactitudSubj);   // constante por sujeto (0-100, %)
+  const ex = (exactitudSubj == null ? 'NA' : exactitudSubj);   // constante por sujeto (0-10)
   const cd = (controlDetect == null ? 'NA' : (controlDetect ? 1 : 0));   // constante por sujeto (0/1)
   let out = cols.map(csvEscape).join(',') + '\n';
   trials.forEach(t => {
@@ -1640,6 +1660,11 @@ function downloadMinimalCsv(pid){
 function downloadAuditCsv(pid, m){
   const dl = m.delivered;
   const rateStr = (o, p) => dl[o][p].rate == null ? 'NA' : dl[o][p].rate.toFixed(4);
+  // Tasa de castigo = complementaria de la de recompensa (rew% + pun% = 100% por
+  // definición, ya que cada ensayo termina en uno de los dos); se deja explícita
+  // en columnas propias para que un revisor pueda comprobar la validez de la
+  // secuencia sin tener que derivarla.
+  const punStr  = (o, p) => dl[o][p].rate == null ? 'NA' : (1 - dl[o][p].rate).toFixed(4);
   const meta = {
     meta_task_version: sessionMeta.task_version || TASK_VERSION,
     meta_schedule: (sessionMeta.schedule != null ? sessionMeta.schedule : 'fixed_v1'),
@@ -1655,9 +1680,17 @@ function downloadAuditCsv(pid, m){
     meta_prob_good: sessionMeta.prob_good, meta_prob_bad: sessionMeta.prob_bad,
     meta_window_focus_changes: windowFocusChanges,
     meta_money_total: m.money, meta_n_omissions: m.nOmissions,
-    // Tasas de refuerzo realmente entregadas (control: buena ~0.70, mala ~0.30)
-    meta_delivered_reward_A_learn: rateStr('A', 0), meta_delivered_reward_B_learn: rateStr('B', 0),
-    meta_delivered_reward_A_rev:   rateStr('A', 1), meta_delivered_reward_B_rev:   rateStr('B', 1)
+    // Tasas de refuerzo REALMENTE vistas por el participante al elegir cada opción
+    // (control de calidad de la secuencia fija). Complementarias por construcción:
+    // meta_delivered_reward_X + meta_delivered_punish_X = 1 (salvo NA si n=0).
+    // Objetivo si la opción es la CORRECTA en esa fase: reward≈0.70 / punish≈0.30.
+    // Objetivo si la opción es la INCORRECTA en esa fase: reward≈0.30 / punish≈0.70.
+    meta_delivered_reward_A_learn: rateStr('A', 0), meta_delivered_punish_A_learn: punStr('A', 0),
+    meta_delivered_reward_B_learn: rateStr('B', 0), meta_delivered_punish_B_learn: punStr('B', 0),
+    meta_delivered_reward_A_rev:   rateStr('A', 1), meta_delivered_punish_A_rev:   punStr('A', 1),
+    meta_delivered_reward_B_rev:   rateStr('B', 1), meta_delivered_punish_B_rev:   punStr('B', 1),
+    meta_delivered_n_A_learn: dl['A'][0].n, meta_delivered_n_B_learn: dl['B'][0].n,
+    meta_delivered_n_A_rev:   dl['A'][1].n, meta_delivered_n_B_rev:   dl['B'][1].n
   };
   const metaKeys = Object.keys(meta);
   const dataKeys = ['id_prlt','trial','phase','block','choice','choice01','outcome','outcome01',
